@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ SMOKE STREAM // 3D VAULT</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;700&display=swap');
+
+        :root {
+            --neon-purple: #9d00ff;
+            --neon-blue: #00d4ff;
+        }
+
+        body {
+            margin: 0;
+            background: #000;
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .content-overlay {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 100px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 80px;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: clamp(3rem, 15vw, 6rem);
+            margin: 0;
+            background: linear-gradient(to bottom, #fff, var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: -5px;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 760px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+            font-size: 1.2rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 50px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .search-box:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .vault-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 100px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .track-card {
+            background: rgba(10, 10, 15, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .track-card:hover {
+            transform: scale(1.02) rotateX(2deg);
+            border-color: var(--neon-purple);
+        }
+
+        .genre {
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
+
+        .iframe-container {
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000;
+            height: 240px;
+            position: relative;
+        }
+
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 3D Navigation Bar */
+        .vibe-nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .vibe-btn {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .vibe-btn:hover {
+            background: white;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="content-overlay">
+        <header>
+            <h1>DJ SMOKE</h1>
+            <p style="letter-spacing: 10px; color: var(--neon-blue);">THE ALGORITHM OF FUNK</p>
+        </header>
+
+        <div class="vibe-nav">
+            <button class="vibe-btn" onclick="filter('all')">THE VAULT</button>
+            <button class="vibe-btn" onclick="filter('G-Funk')">G-FUNK</button>
+            <button class="vibe-btn" onclick="filter('Crunk')">CRUNK</button>
+        </div>
+
+        <input type="text" class="search-box" placeholder="SEARCH DISCOGRAPHY..." id="search">
+
+        <div class="vault-grid" id="vault">
+            </div>
+    </div>
+
+    <script>
+        // --- THE TRACK DATABASE ---
+        const tracks = [
+            { t: "Low Lights, High Danger", g: "BIG ROOM / EDM", v: "House", id: "4eb5722c-08a3-48ac-81e1-8e506a2405ab" },
+            { t: "Sample Mayhem", g: "TURNTABLISM / SCRATCH", v: "Crunk", id: "b5c79c4d-5151-42ca-a631-7730419b4e18" },
+            { t: "The Devil's Summer", g: "WEST COAST / ORCHESTRAL", v: "G-Funk", id: "acfb57ed-982f-42ae-90c7-71640a891362" },
+            { t: "Back For It", g: "GLITCH DISCO / TRAP", v: "House", id: "10242707-d00a-4cae-9470-a88f7625e53f" },
+            { t: "Neon Drifting", g: "RETROWAVE / PHONK", v: "Crunk", id: "eda69867-6359-4f52-8a8d-b403fc26e6ba" },
+            { t: "Midnight In Tokyo", g: "LO-FI / JAZZ", v: "Sensual", id: "23e06613-268f-4736-a632-52b4097df697" },
+            { t: "Midnight Ride", g: "G-FUNK / CHILL", v: "G-Funk", id: "224e2a3f-4046-40ed-b04b-da68c0fc273f" }
+        ];
+
+        function render(data) {
+            document.getElementById('vault').innerHTML = data.map(s => `
+                <div class="track-card">
+                    <div class="genre">${s.g}</div>
+                    <div class="title">${s.t}</div>
+                    <div class="iframe-container">
+                        <iframe src="https://suno.com/embed/${s.id}" loading="lazy"></iframe>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        render(tracks);
+
+        // --- THREE.JS ENGINE ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Create Starfield
+        const starGeometry = new THREE.BufferGeometry();
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff });
+        const starVertices = [];
+        for (let i = 0; i < 10000; i++) {
+            const x = (Math.random() - 0.5) * 2000;
+            const y = (Math.random() - 0.5) * 2000;
+            const z = -Math.random() * 2000;
+            starVertices.push(x, y, z);
+        }
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // Create Geometric Sun
+        const geo = new THREE.IcosahedronGeometry(10, 1);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x9d00ff, wireframe: true });
+        const sun = new THREE.Mesh(geo, mat);
+        sun.position.z = -50;
+        scene.add(sun);
+
+        camera.position.z = 5;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            sun.rotation.y += 0.005;
+            sun.rotation.x += 0.002;
+            stars.rotation.z += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Interaction
+        window.addEventListener('mousemove', (e) => {
+            const mouseX = (e.clientX / window.innerWidth) - 0.5;
+            const mouseY = (e.clientY / window.innerHeight) - 0.5;
+            sun.position.x = mouseX * 20;
+            sun.position.y = -mouseY * 20;
+        });
+
+        document.getElementById('search').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            render(tracks.filter(t => t.t.toLowerCase().includes(val) || t.g.toLowerCase().includes(val)));
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
