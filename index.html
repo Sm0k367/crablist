@@ -1,257 +1,1165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DJ SMOKE // KINETIC ROLLERDEX</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Space+Grotesk:wght@300;700&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DJ Smoke Stream — Music Collection</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Grotesk:wght@400;500;700;800&display=swap');
 
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; background: #020205; 
-            color: #fff; font-family: 'Space Grotesk', sans-serif; 
-        }
-        
-        #canvas-container { position: fixed; top: 0; left: 0; z-index: 1; }
+:root {
+  --bg: #020206;
+  --surface: rgba(12,12,20,0.92);
+  --card: rgba(18,18,30,0.88);
+  --accent: #8b5cf6;
+  --accent2: #06b6d4;
+  --fire: #f97316;
+  --pink: #ec4899;
+  --smoke: #94a3b8;
+  --text: #e2e8f0;
+  --dim: #64748b;
+}
 
-        /* HUD Layer */
-        #hud {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 10;
-            display: flex; flex-direction: column; justify-content: space-between;
-            padding: 60px; box-sizing: border-box;
-        }
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: none;
+}
 
-        header { pointer-events: auto; }
-        h1 { 
-            font-family: 'Syncopate', sans-serif; font-size: 3.5rem; margin: 0; 
-            letter-spacing: 15px; background: linear-gradient(to right, #ff00ff, #00d4ff); 
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-        }
+/* Custom cursor */
+#cursor { position:fixed; width:20px; height:20px; border:2px solid var(--accent); border-radius:50%; pointer-events:none; z-index:10000; transition: transform 0.1s, width 0.3s, height 0.3s, border-color 0.3s; transform:translate(-50%,-50%); mix-blend-mode:difference; }
+#cursor-dot { position:fixed; width:4px; height:4px; background:white; border-radius:50%; pointer-events:none; z-index:10001; transform:translate(-50%,-50%); }
+#cursor.hover { width:50px; height:50px; border-color:var(--fire); }
 
-        #active-track-name {
-            font-size: 2rem; color: #fff; margin-top: 20px;
-            text-shadow: 0 0 20px #8b5cf6; font-weight: 700;
-            text-transform: uppercase;
-        }
+/* Canvas */
+#scene-canvas { position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; }
 
-        /* The Suno Player Dock */
-        #player-station {
-            position: absolute;
-            bottom: 60px; right: 60px;
-            width: 450px; z-index: 20;
-            pointer-events: auto;
-            background: rgba(0,0,0,0.8);
-            border: 2px solid #00d4ff;
-            border-radius: 40px;
-            padding: 25px;
-            transform: translateY(150%);
-            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-            box-shadow: 0 0 100px rgba(0, 212, 255, 0.2);
-        }
+/* Loading screen */
+#loader {
+  position:fixed; inset:0; z-index:9999; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  transition: opacity 1s, visibility 1s;
+}
+#loader.hidden { opacity:0; visibility:hidden; }
+#loader h2 { font-family:'Space Grotesk',sans-serif; font-size:1.5rem; color:var(--accent); margin-bottom:20px; letter-spacing:4px; }
+#load-bar-wrap { width:240px; height:3px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; }
+#load-bar { width:0%; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:2px; transition:width 0.3s; }
 
-        #player-station.active { transform: translateY(0); }
+.content { position:relative; z-index:1; }
 
-        iframe { border: none; width: 100%; height: 260px; border-radius: 20px; }
+/* ====== HERO ====== */
+.hero {
+  height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  position: relative;
+  padding: 20px;
+}
 
-        .scroll-hint {
-            position: absolute; left: 50%; top: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.7rem; letter-spacing: 10px;
-            color: rgba(255,255,255,0.2); text-transform: uppercase;
-        }
+.hero-title-wrap { position: relative; }
 
-        .search-field {
-            pointer-events: auto; background: transparent;
-            border: none; border-bottom: 2px solid #ff00ff;
-            color: #fff; font-size: 1.2rem; width: 250px;
-            outline: none; font-family: 'Space Grotesk';
-        }
-    </style>
+.hero h1 {
+  font-family:'Space Grotesk',sans-serif;
+  font-size: clamp(3.5rem,10vw,7rem);
+  font-weight:800;
+  letter-spacing:-3px;
+  line-height:0.95;
+  position:relative;
+  color:transparent;
+  -webkit-text-stroke: 1px rgba(139,92,246,0.3);
+}
+
+.hero h1 .fill {
+  position:absolute; inset:0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--fire), var(--pink), var(--accent));
+  background-size:400% 400%;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation: megaGradient 8s ease infinite;
+  filter: brightness(1.2);
+}
+
+@keyframes megaGradient {
+  0%,100%{background-position:0% 50%}25%{background-position:100% 0%}50%{background-position:100% 100%}75%{background-position:0% 100%}
+}
+
+.hero h1 .glitch {
+  position:absolute; inset:0;
+  background: linear-gradient(135deg, var(--accent2), var(--fire));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation: glitch 4s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+  opacity:0;
+}
+
+@keyframes glitch {
+  0%,92%,100%{opacity:0;transform:translate(0)}93%{opacity:0.8;transform:translate(-3px,1px)}94%{opacity:0;transform:translate(3px,-1px)}95%{opacity:0.6;transform:translate(1px,2px)}96%{opacity:0}
+}
+
+.hero .sub {
+  font-size:clamp(0.8rem,2vw,1.2rem);
+  letter-spacing:8px;
+  text-transform:uppercase;
+  color:var(--dim);
+  margin-top:20px;
+  font-weight:300;
+  opacity:0;
+  animation: heroFade 1.5s ease 0.5s forwards;
+}
+
+.hero .tagline {
+  font-size:0.85rem;
+  color:rgba(148,163,184,0.5);
+  margin-top:12px;
+  opacity:0;
+  animation: heroFade 1.5s ease 1s forwards;
+}
+
+.hero .tagline a { color:var(--accent); text-decoration:none; }
+
+@keyframes heroFade { to { opacity:1; } }
+
+.scroll-hint {
+  position:absolute;
+  bottom:40px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  color:var(--dim);
+  font-size:0.7rem;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  opacity:0;
+  animation: heroFade 1.5s ease 1.5s forwards;
+}
+
+.scroll-arrow {
+  width:20px; height:30px;
+  border:2px solid var(--dim);
+  border-radius:10px;
+  position:relative;
+}
+
+.scroll-arrow::before {
+  content:'';
+  position:absolute;
+  top:6px; left:50%;
+  transform:translateX(-50%);
+  width:3px; height:8px;
+  background:var(--accent);
+  border-radius:2px;
+  animation: scrollBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes scrollBounce { 0%,100%{transform:translateX(-50%) translateY(0);opacity:1}50%{transform:translateX(-50%) translateY(8px);opacity:0.3} }
+
+/* ====== WAVEFORM DIVIDER ====== */
+.wave-section { position:relative; padding:20px 0; }
+.wave-canvas { width:100%; height:80px; display:block; }
+
+/* ====== STATS ====== */
+.stats-section {
+  padding:60px 20px;
+  display:flex;
+  justify-content:center;
+  gap:60px;
+  flex-wrap:wrap;
+  position:relative;
+}
+
+.stat {
+  text-align:center;
+  position:relative;
+  opacity:0;
+  transform:translateY(40px);
+  transition: all 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+
+.stat.visible { opacity:1; transform:translateY(0); }
+
+.stat-ring {
+  width:100px; height:100px;
+  margin:0 auto 12px;
+  position:relative;
+}
+
+.stat-ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+.stat-ring circle { fill:none; stroke-width:2; }
+.stat-ring .bg { stroke:rgba(255,255,255,0.04); }
+.stat-ring .progress { stroke:var(--accent); stroke-dasharray:283; stroke-dashoffset:283; stroke-linecap:round; transition: stroke-dashoffset 1.5s cubic-bezier(0.16,1,0.3,1); }
+
+.stat-num {
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  font-family:'Space Grotesk',sans-serif;
+  font-size:1.8rem;
+  font-weight:700;
+  color:white;
+}
+
+.stat-label { font-size:0.7rem; color:var(--dim); text-transform:uppercase; letter-spacing:2px; }
+
+/* ====== CONTROLS ====== */
+.controls {
+  max-width:800px;
+  margin:0 auto;
+  padding:0 20px 30px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:20px;
+}
+
+.search-wrap { position:relative; width:100%; max-width:480px; }
+
+.search-wrap input {
+  width:100%;
+  padding:16px 24px 16px 48px;
+  background:var(--surface);
+  border:1px solid rgba(139,92,246,0.1);
+  border-radius:60px;
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  font-size:0.95rem;
+  outline:none;
+  transition:all 0.4s;
+  backdrop-filter:blur(20px);
+}
+
+.search-wrap input:focus { border-color:var(--accent); box-shadow:0 0 40px rgba(139,92,246,0.15), inset 0 0 20px rgba(139,92,246,0.05); }
+.search-wrap input::placeholder { color:var(--dim); }
+.search-icon { position:absolute; left:20px; top:50%; transform:translateY(-50%); font-size:1rem; color:var(--dim); pointer-events:none; }
+
+.filters { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+
+.filter-btn {
+  background:var(--surface);
+  border:1px solid rgba(255,255,255,0.05);
+  color:var(--dim);
+  padding:10px 22px;
+  border-radius:50px;
+  cursor:pointer;
+  font-size:0.82rem;
+  font-family:'Inter',sans-serif;
+  font-weight:500;
+  transition:all 0.4s cubic-bezier(0.4,0,0.2,1);
+  backdrop-filter:blur(10px);
+  position:relative;
+}
+
+.filter-btn:hover { color:white; border-color:rgba(139,92,246,0.3); transform:translateY(-2px); }
+
+.filter-btn.active {
+  background:linear-gradient(135deg,var(--accent),#6d28d9);
+  color:white;
+  border-color:transparent;
+  box-shadow:0 4px 30px rgba(139,92,246,0.3);
+  transform:translateY(-2px);
+}
+
+.track-count { text-align:center; color:var(--dim); font-size:0.75rem; padding:10px 20px 5px; letter-spacing:1px; text-transform:uppercase; }
+
+/* ====== VIEW TOGGLE ====== */
+.view-toggle {
+  display:flex; gap:4px; background:var(--surface); border-radius:8px; padding:3px; border:1px solid rgba(255,255,255,0.05);
+}
+
+.view-btn {
+  background:none; border:none; color:var(--dim); padding:6px 12px; border-radius:6px;
+  cursor:pointer; font-size:0.9rem; transition:all 0.3s;
+}
+.view-btn.active { background:var(--accent); color:white; }
+
+/* ====== GRID ====== */
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));
+  gap:20px;
+  padding:20px;
+  max-width:1400px;
+  margin:0 auto;
+}
+
+.grid.list-view { grid-template-columns:1fr; max-width:800px; }
+.grid.list-view .track { display:flex; }
+.grid.list-view .track-info { flex:1; padding:16px 20px; }
+.grid.list-view .track-title { font-size:1rem; }
+
+.track {
+  background:var(--card);
+  border:1px solid rgba(255,255,255,0.03);
+  border-radius:20px;
+  overflow:hidden;
+  position:relative;
+  backdrop-filter:blur(10px);
+  opacity:0;
+  transform:translateY(40px) scale(0.95);
+  transition: all 0.6s cubic-bezier(0.16,1,0.3,1), border-color 0.3s, box-shadow 0.3s;
+}
+
+.track.visible { opacity:1; transform:translateY(0) scale(1); }
+
+.track-shimmer {
+  position:absolute; inset:0;
+  background:linear-gradient(105deg, transparent 40%, rgba(139,92,246,0.03) 45%, rgba(6,182,212,0.03) 55%, transparent 60%);
+  background-size:200% 100%;
+  animation:shimmer 6s ease-in-out infinite;
+  pointer-events:none;
+  z-index:0;
+}
+
+@keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
+
+.track-glow {
+  position:absolute; top:-50%; left:-50%; width:200%; height:200%;
+  background:radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(139,92,246,0.08) 0%, transparent 50%);
+  pointer-events:none; z-index:0; opacity:0; transition:opacity 0.3s;
+}
+
+.track:hover .track-glow { opacity:1; }
+
+.track::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg, var(--accent), var(--accent2), var(--fire), var(--pink));
+  background-size:300% 100%;
+  opacity:0; transition:opacity 0.4s;
+  animation:barFlow 4s linear infinite; z-index:2;
+}
+
+@keyframes barFlow { 0%{background-position:0% 0}100%{background-position:300% 0} }
+
+.track:hover {
+  transform:translateY(-10px) scale(1.02);
+  border-color:rgba(139,92,246,0.2);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 60px rgba(139,92,246,0.08);
+}
+
+.track:hover::before { opacity:1; }
+
+.track.playing { border-color:rgba(249,115,22,0.4); }
+.track.playing::before { opacity:1; background:linear-gradient(90deg, var(--fire), #ef4444, var(--fire)); }
+.track.playing .track-title { color:var(--fire); }
+
+.track-info { padding:24px; position:relative; z-index:1; }
+
+.track-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+
+.track-num {
+  font-family:'Space Grotesk',sans-serif; font-size:0.68rem; color:var(--dim);
+  background:rgba(255,255,255,0.04); padding:4px 10px; border-radius:6px; letter-spacing:1px;
+}
+
+.track-badge { font-size:0.62rem; padding:4px 10px; border-radius:12px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; }
+.badge-fire { background:rgba(249,115,22,0.12); color:var(--fire); }
+.badge-dj { background:rgba(6,182,212,0.12); color:var(--accent2); }
+.badge-smoke { background:rgba(148,163,184,0.12); color:var(--smoke); }
+.badge-vibe { background:rgba(139,92,246,0.12); color:var(--accent); }
+
+.track-title {
+  font-family:'Space Grotesk',sans-serif; font-size:1.2rem; font-weight:700;
+  margin:10px 0 6px; color:#fff; transition:color 0.3s;
+}
+
+.track:hover .track-title { color:var(--accent); }
+
+.track-details { font-size:0.8rem; color:var(--dim); line-height:1.6; }
+
+.track-meta { display:flex; gap:14px; margin-top:14px; font-size:0.7rem; color:var(--dim); flex-wrap:wrap; }
+.track-meta span { display:flex; align-items:center; gap:4px; }
+
+.play-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  margin-top:16px; padding:10px 24px;
+  background:linear-gradient(135deg, var(--accent), #6d28d9);
+  color:white; border:none; border-radius:50px;
+  font-size:0.82rem; font-family:'Inter',sans-serif; font-weight:600;
+  cursor:pointer; transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+  position:relative; overflow:hidden;
+}
+
+.play-btn::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg, var(--fire), #dc2626);
+  opacity:0; transition:opacity 0.3s;
+}
+
+.play-btn span { position:relative; z-index:1; }
+.play-btn:hover { transform:scale(1.08); box-shadow:0 4px 30px rgba(139,92,246,0.3); }
+.play-btn.playing::after { opacity:1; }
+
+.embed-container { max-height:0; overflow:hidden; transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1); }
+.embed-container.open { max-height:260px; }
+.embed-container iframe { width:100%; height:240px; border:none; border-top:1px solid rgba(255,255,255,0.04); }
+
+.no-embed { padding:16px 24px; text-align:center; font-size:0.8rem; color:var(--dim); border-top:1px solid rgba(255,255,255,0.04); }
+.no-embed a { color:var(--accent); text-decoration:none; font-weight:600; }
+
+/* ====== NOW PLAYING ====== */
+.now-playing {
+  position:fixed; bottom:0; left:0; right:0;
+  background:rgba(8,8,14,0.96);
+  border-top:1px solid rgba(139,92,246,0.2);
+  padding:14px 24px;
+  display:none; align-items:center; justify-content:space-between;
+  z-index:100; backdrop-filter:blur(30px);
+  box-shadow:0 -10px 60px rgba(0,0,0,0.6);
+}
+.now-playing.visible { display:flex; }
+
+.np-left { display:flex; align-items:center; gap:16px; }
+
+.np-viz { display:flex; align-items:flex-end; gap:2px; height:28px; }
+.np-bar { width:3px; background:linear-gradient(to top, var(--accent), var(--accent2)); border-radius:2px; animation:npB 0.6s ease-in-out infinite alternate; }
+.np-bar:nth-child(1){animation-delay:0s;height:10px}.np-bar:nth-child(2){animation-delay:0.1s;height:18px}.np-bar:nth-child(3){animation-delay:0.2s;height:12px}.np-bar:nth-child(4){animation-delay:0.15s;height:24px}.np-bar:nth-child(5){animation-delay:0.05s;height:14px}.np-bar:nth-child(6){animation-delay:0.25s;height:20px}
+@keyframes npB { 0%{transform:scaleY(0.3)}100%{transform:scaleY(1)} }
+
+.np-info .np-label { font-size:0.58rem; color:var(--dim); text-transform:uppercase; letter-spacing:2px; }
+.np-title { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:0.95rem; }
+
+.np-close {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  color:var(--dim); cursor:pointer; font-size:1rem; padding:8px 14px; border-radius:10px; transition:all 0.3s;
+}
+.np-close:hover { background:rgba(239,68,68,0.12); color:#ef4444; border-color:rgba(239,68,68,0.2); }
+
+/* ====== SCROLL TOP ====== */
+.scroll-top {
+  position:fixed; bottom:80px; right:24px;
+  width:48px; height:48px;
+  background:linear-gradient(135deg,var(--accent),#6d28d9);
+  border:none; border-radius:50%; color:white; font-size:1.2rem;
+  cursor:pointer; z-index:99;
+  opacity:0; transform:translateY(20px);
+  transition:all 0.4s; box-shadow:0 4px 30px rgba(139,92,246,0.3);
+}
+.scroll-top.visible { opacity:1; transform:translateY(0); }
+.scroll-top:hover { transform:translateY(-3px) scale(1.1); }
+
+/* ====== FOOTER ====== */
+footer {
+  text-align:center; padding:80px 20px 120px;
+  color:var(--dim); font-size:0.8rem; position:relative;
+}
+.footer-logo { font-size:2.5rem; margin-bottom:16px; filter:drop-shadow(0 0 30px rgba(139,92,246,0.3)); }
+footer a { color:var(--accent); text-decoration:none; }
+
+/* ====== RESPONSIVE ====== */
+@media(max-width:768px){
+  .grid{grid-template-columns:1fr;padding:12px;gap:14px}
+  .hero h1{letter-spacing:-1px}
+  .stats-section{gap:30px;padding:40px 20px}
+  .stat-ring{width:80px;height:80px}
+  .stat-num{font-size:1.4rem}
+  body{cursor:auto}
+  #cursor,#cursor-dot{display:none}
+}
+
+@media(max-width:400px){
+  .filters{gap:6px}
+  .filter-btn{padding:8px 14px;font-size:0.75rem}
+}
+</style>
 </head>
 <body>
 
-<div id="canvas-container"></div>
-<div class="scroll-hint">SCROLL TO SPIN ROLLERDEX</div>
+<!-- LOADER -->
+<div id="loader">
+  <h2>SMOKE STREAM</h2>
+  <div id="load-bar-wrap"><div id="load-bar"></div></div>
+</div>
 
-<div id="hud">
-    <header>
-        <h1>DJ SMOKE</h1>
-        <div id="active-track-name">READY TO SPIN</div>
-    </header>
+<!-- CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-dot"></div>
 
-    <div id="player-station">
-        <div style="display:flex; justify-content:space-between; margin-bottom:15px; color:#00d4ff; font-weight:900;">
-            <span id="playing-title">NOW PLAYING</span>
-            <span style="cursor:pointer;" onclick="closePlayer()">[ CLOSE ]</span>
-        </div>
-        <div id="iframe-inject"></div>
+<!-- THREE.JS CANVAS -->
+<canvas id="scene-canvas"></canvas>
+
+<div class="content">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-title-wrap">
+    <h1>
+      DJ SMOKE<br>STREAM
+      <span class="fill" aria-hidden="true">DJ SMOKE<br>STREAM</span>
+      <span class="glitch" aria-hidden="true">DJ SMOKE<br>STREAM</span>
+    </h1>
+  </div>
+  <div class="sub">Music Collection</div>
+  <div class="tagline">49 Tracks · <a href="https://suno.com/@dj_smoke_stream" target="_blank">Suno AI</a> · @dj_smoke_stream</div>
+  <div class="scroll-hint">
+    <div class="scroll-arrow"></div>
+    scroll
+  </div>
+</section>
+
+<!-- WAVE DIVIDER -->
+<div class="wave-section"><canvas class="wave-canvas" id="waveCanvas"></canvas></div>
+
+<!-- STATS -->
+<section class="stats-section">
+  <div class="stat" data-val="49" data-max="50">
+    <div class="stat-ring">
+      <svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="progress" cx="50" cy="50" r="45"/></svg>
+      <div class="stat-num">0</div>
     </div>
-
-    <div style="pointer-events: auto;">
-        <input type="text" class="search-field" placeholder="FIND NODE..." oninput="handleSearch(this.value)">
+    <div class="stat-label">Tracks</div>
+  </div>
+  <div class="stat" data-val="6" data-max="49">
+    <div class="stat-ring">
+      <svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="progress" cx="50" cy="50" r="45"/></svg>
+      <div class="stat-num">0</div>
     </div>
+    <div class="stat-label">Smoke Stream</div>
+  </div>
+  <div class="stat" data-val="10" data-max="49">
+    <div class="stat-ring">
+      <svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="progress" cx="50" cy="50" r="45"/></svg>
+      <div class="stat-num">0</div>
+    </div>
+    <div class="stat-label">DJ / Turntablism</div>
+  </div>
+  <div class="stat" data-val="182" data-max="200">
+    <div class="stat-ring">
+      <svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="progress" cx="50" cy="50" r="45"/></svg>
+      <div class="stat-num">0</div>
+    </div>
+    <div class="stat-label">Followers</div>
+  </div>
+</section>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search tracks...">
+  </div>
+  <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center">
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All Tracks</button>
+      <button class="filter-btn" data-filter="fire">🔥 Fire</button>
+      <button class="filter-btn" data-filter="dj">🎧 DJ</button>
+      <button class="filter-btn" data-filter="smoke">🌫️ Smoke</button>
+      <button class="filter-btn" data-filter="vibe">🎵 Vibe</button>
+    </div>
+    <div class="view-toggle">
+      <button class="view-btn active" data-view="grid" title="Grid">▦</button>
+      <button class="view-btn" data-view="list" title="List">☰</button>
+    </div>
+  </div>
+</div>
+
+<div class="track-count" id="trackCount"></div>
+<div class="grid" id="trackGrid"></div>
+
+<!-- NOW PLAYING -->
+<div class="now-playing" id="nowPlaying">
+  <div class="np-left">
+    <div class="np-viz"><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div></div>
+    <div class="np-info"><div class="np-label">Now Playing</div><div class="np-title" id="nowPlayingTitle"></div></div>
+  </div>
+  <button class="np-close" onclick="closePlayer()">✕</button>
+</div>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<footer>
+  <div class="footer-logo">🌫️</div>
+  <p style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem">DJ Smoke Stream — Epic Tech AIGent</p>
+  <p style="margin-top:8px;font-size:0.65rem;letter-spacing:4px;text-transform:uppercase;opacity:0.6">THE ABSOLUTE ALGORITHM OF EXISTENCE</p>
+  <p style="margin-top:14px"><a href="https://suno.com/@dj_smoke_stream" target="_blank">Follow on Suno →</a></p>
+  <p style="margin-top:20px;opacity:0.3;font-size:0.75rem">Cataloged by Smoke Stream 🌫️ · 2026</p>
+</footer>
+
 </div>
 
 <script>
-    // --- EVERY TRACK INTEGRATED ---
-    const rawData = [
-        { t: "One Night Only", id: "daff476d-0b5d-4f71-97a2-cc2b85fb7f3c" },
-        { t: "Moonshot Blues", id: "9984da17-19f8-4524-b63d-4b2b9e43c5f7" },
-        { t: "The Devil's Summer", id: "acfb57ed-982f-42ae-90c7-71640a891362" },
-        { t: "Countdown", id: "e10b411d-6169-42c2-8097-90924043940c" },
-        { t: "Back For It", id: "10242707-d00a-4cae-9470-a88f7625e53f" },
-        { t: "Neon Drifting", id: "eda69867-6359-4f52-8a8d-b403fc26e6ba" },
-        { t: "Vibe Check", id: "2d5066ca-9f23-492c-826b-86e9cc7ff8d3" },
-        { t: "Sample Mayhem", id: "b5c79c4d-5151-42ca-a631-7730419b4e18" },
-        { t: "Smoke Zone", id: "fbacec1b-457a-4a29-9407-5ac4e5232a63" },
-        { t: "Cyber Streets", id: "627f5bf0-4a26-4654-a023-3585f6799bf9" }
+// ====================== THREE.JS SCENE ======================
+const SceneManager = (() => {
+  const canvas = document.getElementById('scene-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x020206, 0.008);
+
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+  camera.position.set(0, 0, 100);
+
+  let mouseX = 0, mouseY = 0, scrollY = 0;
+
+  // ---- GALAXY PARTICLES ----
+  const galaxyCount = 15000;
+  const gPositions = new Float32Array(galaxyCount * 3);
+  const gColors = new Float32Array(galaxyCount * 3);
+  const gSizes = new Float32Array(galaxyCount);
+  const gAngles = new Float32Array(galaxyCount);
+  const gRadii = new Float32Array(galaxyCount);
+  const gSpeeds = new Float32Array(galaxyCount);
+
+  const colors = [
+    new THREE.Color(0x8b5cf6),
+    new THREE.Color(0x06b6d4),
+    new THREE.Color(0xf97316),
+    new THREE.Color(0xec4899),
+    new THREE.Color(0x94a3b8),
+  ];
+
+  for (let i = 0; i < galaxyCount; i++) {
+    const arm = Math.floor(Math.random() * 4);
+    const angle = (arm / 4) * Math.PI * 2 + (Math.random() - 0.5) * 1.2;
+    const radius = Math.pow(Math.random(), 0.6) * 150;
+
+    gAngles[i] = angle;
+    gRadii[i] = radius;
+    gSpeeds[i] = (0.02 + Math.random() * 0.04) / (1 + radius * 0.01);
+
+    const spiralAngle = angle + radius * 0.04;
+    gPositions[i*3] = Math.cos(spiralAngle) * radius;
+    gPositions[i*3+1] = (Math.random() - 0.5) * (10 + radius * 0.15);
+    gPositions[i*3+2] = Math.sin(spiralAngle) * radius;
+
+    const c = colors[Math.floor(Math.random() * colors.length)];
+    gColors[i*3] = c.r; gColors[i*3+1] = c.g; gColors[i*3+2] = c.b;
+    gSizes[i] = Math.random() * 3 + 0.5;
+  }
+
+  const gGeo = new THREE.BufferGeometry();
+  gGeo.setAttribute('position', new THREE.BufferAttribute(gPositions, 3));
+  gGeo.setAttribute('color', new THREE.BufferAttribute(gColors, 3));
+  gGeo.setAttribute('size', new THREE.BufferAttribute(gSizes, 1));
+
+  const gMat = new THREE.ShaderMaterial({
+    vertexColors: true, transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    vertexShader: `
+      attribute float size;
+      varying vec3 vColor;
+      varying float vDist;
+      void main(){
+        vColor = color;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vDist = -mv.z;
+        gl_PointSize = size * (300.0 / vDist);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vDist;
+      void main(){
+        float d = length(gl_PointCoord - 0.5);
+        if(d > 0.5) discard;
+        float glow = exp(-d * 4.0);
+        float core = smoothstep(0.5, 0.0, d);
+        float alpha = (glow * 0.4 + core * 0.8) * clamp(1.0 - vDist/500.0, 0.1, 1.0);
+        gl_FragColor = vec4(vColor * (1.0 + core * 0.5), alpha);
+      }`
+  });
+
+  const galaxy = new THREE.Points(gGeo, gMat);
+  scene.add(galaxy);
+
+  // ---- SMOKE CLOUDS ----
+  const smokeGeo = new THREE.BufferGeometry();
+  const smokeCount = 200;
+  const sPos = new Float32Array(smokeCount * 3);
+  const sSizes = new Float32Array(smokeCount);
+
+  for (let i = 0; i < smokeCount; i++) {
+    sPos[i*3] = (Math.random() - 0.5) * 300;
+    sPos[i*3+1] = (Math.random() - 0.5) * 100;
+    sPos[i*3+2] = (Math.random() - 0.5) * 300;
+    sSizes[i] = Math.random() * 80 + 20;
+  }
+
+  smokeGeo.setAttribute('position', new THREE.BufferAttribute(sPos, 3));
+  smokeGeo.setAttribute('size', new THREE.BufferAttribute(sSizes, 1));
+
+  const smokeMat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0x8b5cf6) } },
+    vertexShader: `
+      attribute float size;
+      uniform float uTime;
+      varying float vAlpha;
+      void main(){
+        vec3 pos = position;
+        pos.y += sin(uTime * 0.3 + position.x * 0.01) * 5.0;
+        pos.x += cos(uTime * 0.2 + position.z * 0.01) * 3.0;
+        vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+        float dist = -mv.z;
+        gl_PointSize = size * (400.0 / dist);
+        vAlpha = clamp(1.0 - dist / 400.0, 0.0, 1.0) * 0.04;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform vec3 uColor;
+      varying float vAlpha;
+      void main(){
+        float d = length(gl_PointCoord - 0.5);
+        if(d > 0.5) discard;
+        float a = smoothstep(0.5, 0.0, d) * vAlpha;
+        gl_FragColor = vec4(uColor, a);
+      }`
+  });
+
+  const smoke = new THREE.Points(smokeGeo, smokeMat);
+  scene.add(smoke);
+
+  // ---- ENERGY RINGS ----
+  const rings = [];
+  for (let i = 0; i < 5; i++) {
+    const geo = new THREE.TorusGeometry(30 + i * 20, 0.1 + i * 0.02, 6, 128);
+    const mat = new THREE.MeshBasicMaterial({
+      color: colors[i % colors.length],
+      transparent: true, opacity: 0.06,
+      wireframe: true
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = Math.PI * 0.45 + i * 0.15;
+    mesh.rotation.z = i * 0.4;
+    rings.push(mesh);
+    scene.add(mesh);
+  }
+
+  // ---- FLOATING ORBS ----
+  const orbGroup = new THREE.Group();
+  const orbCount = 30;
+  for (let i = 0; i < orbCount; i++) {
+    const geo = new THREE.SphereGeometry(0.3 + Math.random() * 0.5, 12, 12);
+    const mat = new THREE.MeshBasicMaterial({
+      color: colors[i % colors.length],
+      transparent: true, opacity: 0.4
+    });
+    const orb = new THREE.Mesh(geo, mat);
+    const a = Math.random() * Math.PI * 2;
+    const r = 40 + Math.random() * 60;
+    orb.position.set(Math.cos(a)*r, (Math.random()-0.5)*30, Math.sin(a)*r);
+    orb.userData = { angle: a, radius: r, speed: 0.002 + Math.random() * 0.005, yOff: Math.random() * 10 };
+    orbGroup.add(orb);
+  }
+  scene.add(orbGroup);
+
+  // ---- DNA HELIX ----
+  const helixGroup = new THREE.Group();
+  const helixMat1 = new THREE.MeshBasicMaterial({ color: 0x8b5cf6, transparent: true, opacity: 0.15 });
+  const helixMat2 = new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.15 });
+  const helixSphere = new THREE.SphereGeometry(0.4, 8, 8);
+
+  for (let i = 0; i < 80; i++) {
+    const t = i * 0.15;
+    const y = (i - 40) * 2;
+    const s1 = new THREE.Mesh(helixSphere, helixMat1);
+    s1.position.set(Math.cos(t) * 15, y, Math.sin(t) * 15);
+    helixGroup.add(s1);
+
+    const s2 = new THREE.Mesh(helixSphere, helixMat2);
+    s2.position.set(Math.cos(t + Math.PI) * 15, y, Math.sin(t + Math.PI) * 15);
+    helixGroup.add(s2);
+
+    if (i % 4 === 0) {
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x8b5cf6, transparent: true, opacity: 0.05 });
+      const lineGeo = new THREE.BufferGeometry().setFromPoints([s1.position.clone(), s2.position.clone()]);
+      helixGroup.add(new THREE.Line(lineGeo, lineMat));
+    }
+  }
+  helixGroup.position.x = 120;
+  scene.add(helixGroup);
+
+  // ---- LIGHT BEAMS ----
+  const beams = [];
+  for (let i = 0; i < 6; i++) {
+    const geo = new THREE.CylinderGeometry(0.1, 2, 200, 4);
+    const mat = new THREE.MeshBasicMaterial({ color: colors[i % colors.length], transparent: true, opacity: 0.02 });
+    const beam = new THREE.Mesh(geo, mat);
+    beam.position.set((Math.random()-0.5)*200, 0, (Math.random()-0.5)*200);
+    beam.rotation.z = (Math.random()-0.5)*0.5;
+    beam.rotation.x = (Math.random()-0.5)*0.3;
+    beams.push(beam);
+    scene.add(beam);
+  }
+
+  // ---- MOUSE / SCROLL ----
+  document.addEventListener('mousemove', e => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+  window.addEventListener('scroll', () => { scrollY = window.scrollY; });
+
+  // ---- ANIMATE ----
+  function animate() {
+    requestAnimationFrame(animate);
+    const t = performance.now() * 0.001;
+
+    // Galaxy rotation
+    galaxy.rotation.y += 0.0005;
+    galaxy.rotation.x = Math.sin(t * 0.1) * 0.05;
+
+    // Update galaxy particle positions (subtle breathing)
+    const pos = gGeo.attributes.position.array;
+    for (let i = 0; i < galaxyCount; i++) {
+      const a = gAngles[i] + t * gSpeeds[i];
+      const r = gRadii[i];
+      const spiral = a + r * 0.04;
+      pos[i*3] = Math.cos(spiral) * r;
+      pos[i*3+2] = Math.sin(spiral) * r;
+    }
+    gGeo.attributes.position.needsUpdate = true;
+
+    // Smoke
+    smokeMat.uniforms.uTime.value = t;
+    const hue = (Math.sin(t * 0.1) * 0.1 + 0.75) % 1;
+    smokeMat.uniforms.uColor.value.setHSL(hue, 0.7, 0.5);
+
+    // Rings
+    rings.forEach((ring, i) => {
+      ring.rotation.z += 0.001 * (i % 2 === 0 ? 1 : -1);
+      ring.rotation.y += 0.0005;
+      ring.material.opacity = 0.04 + Math.sin(t + i) * 0.02;
+    });
+
+    // Orbs
+    orbGroup.children.forEach(orb => {
+      const d = orb.userData;
+      d.angle += d.speed;
+      orb.position.x = Math.cos(d.angle) * d.radius;
+      orb.position.z = Math.sin(d.angle) * d.radius;
+      orb.position.y = Math.sin(t + d.yOff) * 10;
+    });
+
+    // Helix
+    helixGroup.rotation.y += 0.003;
+    helixGroup.position.y = Math.sin(t * 0.3) * 10;
+
+    // Beams
+    beams.forEach((b, i) => {
+      b.rotation.y += 0.001;
+      b.material.opacity = 0.01 + Math.sin(t * 0.5 + i) * 0.01;
+    });
+
+    // Camera
+    const scrollFactor = scrollY * 0.001;
+    camera.position.x += (mouseX * 15 - camera.position.x) * 0.02;
+    camera.position.y += (-mouseY * 8 + scrollFactor * 10 - camera.position.y) * 0.02;
+    camera.position.z = 100 - Math.min(scrollY * 0.03, 60);
+    camera.fov = 60 + Math.min(scrollFactor * 8, 15);
+    camera.updateProjectionMatrix();
+    camera.lookAt(0, scrollFactor * 5, 0);
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+})();
+
+// ====================== CUSTOM CURSOR ======================
+(() => {
+  const cursor = document.getElementById('cursor');
+  const dot = document.getElementById('cursor-dot');
+  let cx = 0, cy = 0, dx = 0, dy = 0;
+
+  document.addEventListener('mousemove', e => { dx = e.clientX; dy = e.clientY; });
+
+  function updateCursor() {
+    cx += (dx - cx) * 0.15;
+    cy += (dy - cy) * 0.15;
+    cursor.style.left = cx + 'px';
+    cursor.style.top = cy + 'px';
+    dot.style.left = dx + 'px';
+    dot.style.top = dy + 'px';
+    requestAnimationFrame(updateCursor);
+  }
+  updateCursor();
+
+  document.addEventListener('mouseover', e => {
+    if (e.target.matches('button, a, .play-btn, .filter-btn, .track')) cursor.classList.add('hover');
+  });
+  document.addEventListener('mouseout', e => {
+    if (e.target.matches('button, a, .play-btn, .filter-btn, .track')) cursor.classList.remove('hover');
+  });
+})();
+
+// ====================== WAVE CANVAS ======================
+(() => {
+  const c = document.getElementById('waveCanvas');
+  const ctx = c.getContext('2d');
+
+  function resize() { c.width = c.offsetWidth * 2; c.height = c.offsetHeight * 2; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function draw() {
+    const t = performance.now() * 0.001;
+    const w = c.width, h = c.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const waves = [
+      { color: 'rgba(139,92,246,0.3)', amp: 15, freq: 0.008, speed: 1.2, y: 0.5 },
+      { color: 'rgba(6,182,212,0.2)', amp: 10, freq: 0.012, speed: 0.8, y: 0.55 },
+      { color: 'rgba(249,115,22,0.15)', amp: 12, freq: 0.006, speed: 1.5, y: 0.45 },
     ];
 
-    // Build the 116 Track Array
-    const tracks = Array.from({ length: 116 }, (_, i) => ({
-        ...rawData[i % rawData.length],
-        index: i + 1,
-        fullTitle: (rawData[i % rawData.length].t) + " // NODE " + (i + 1)
-    }));
-
-    // --- THREE.JS ENGINE ---
-    let scene, camera, renderer, dexWheel, cards = [];
-    let targetRotation = 0;
-    let currentRotation = 0;
-
-    function init() {
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
-        camera.position.set(0, 0, 15);
-
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-        // Ambience
-        const light = new THREE.PointLight(0x00d4ff, 2, 50);
-        light.position.set(0, 0, 10);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
-
-        // Create the Rollerdex Wheel
-        dexWheel = new THREE.Group();
-        const radius = 8;
-        
-        tracks.forEach((track, i) => {
-            const angle = (i / tracks.length) * Math.PI * 2;
-            
-            // The Holographic Card
-            const geometry = new THREE.PlaneGeometry(3.5, 2);
-            const material = new THREE.MeshPhongMaterial({
-                color: 0x8b5cf6,
-                side: THREE.DoubleSide,
-                transparent: true,
-                opacity: 0.6,
-                emissive: 0x221144
-            });
-            const card = new THREE.Mesh(geometry, material);
-
-            // Position card in a circle
-            card.position.x = Math.cos(angle) * radius;
-            card.position.z = Math.sin(angle) * radius;
-            card.lookAt(0, 0, 0);
-
-            card.userData = track;
-            cards.push(card);
-            dexWheel.add(card);
-        });
-
-        scene.add(dexWheel);
-        animate();
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-
-        // Smooth Rotation physics
-        currentRotation += (targetRotation - currentRotation) * 0.05;
-        dexWheel.rotation.y = currentRotation;
-
-        // Dynamic Card Scaling (Rollerdex effect)
-        cards.forEach(card => {
-            const worldPos = new THREE.Vector3();
-            card.getWorldPosition(worldPos);
-            
-            // If the card is in front of the camera
-            const dist = worldPos.distanceTo(camera.position);
-            if (dist < 10) {
-                card.scale.set(1.5, 1.5, 1.5);
-                card.material.opacity = 1;
-                card.material.emissive.setHex(0x00d4ff);
-                document.getElementById('active-track-name').innerText = card.userData.fullTitle;
-            } else {
-                card.scale.set(1, 1, 1);
-                card.material.opacity = 0.3;
-                card.material.emissive.setHex(0x221144);
-            }
-        });
-
-        renderer.render(scene, camera);
-    }
-
-    // --- INTERACTIONS ---
-    window.addEventListener('wheel', (e) => {
-        targetRotation -= e.deltaY * 0.005;
+    waves.forEach(wave => {
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 2) {
+        const y = h * wave.y + Math.sin(x * wave.freq + t * wave.speed) * wave.amp + Math.sin(x * wave.freq * 2.3 + t * wave.speed * 0.7) * wave.amp * 0.5;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = wave.color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
     });
 
-    window.addEventListener('click', () => {
-        // Find the card closest to the front
-        let closestCard = null;
-        let minDist = Infinity;
-        
-        cards.forEach(card => {
-            const worldPos = new THREE.Vector3();
-            card.getWorldPosition(worldPos);
-            const d = worldPos.distanceTo(camera.position);
-            if (d < minDist) {
-                minDist = d;
-                closestCard = card;
-            }
-        });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
 
-        if (closestCard) launchTrack(closestCard.userData);
+// ====================== LOADING ======================
+(() => {
+  const bar = document.getElementById('load-bar');
+  const loader = document.getElementById('loader');
+  let p = 0;
+  const iv = setInterval(() => {
+    p += Math.random() * 15 + 5;
+    if (p >= 100) { p = 100; clearInterval(iv); setTimeout(() => loader.classList.add('hidden'), 300); }
+    bar.style.width = p + '%';
+  }, 120);
+})();
+
+// ====================== STAT ANIMATIONS ======================
+(() => {
+  const stats = document.querySelectorAll('.stat');
+  const circumference = 2 * Math.PI * 45;
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      el.classList.add('visible');
+      const val = +el.dataset.val;
+      const max = +el.dataset.max;
+      const progress = el.querySelector('.progress');
+      const numEl = el.querySelector('.stat-num');
+
+      // Animate ring
+      const offset = circumference - (val / max) * circumference;
+      setTimeout(() => { progress.style.strokeDashoffset = offset; }, 200);
+
+      // Animate number
+      let current = 0;
+      const step = Math.max(1, Math.floor(val / 50));
+      const iv = setInterval(() => {
+        current += step;
+        if (current >= val) { current = val; clearInterval(iv); }
+        numEl.textContent = current;
+      }, 25);
+
+      obs.unobserve(el);
     });
+  }, { threshold: 0.5 });
 
-    function launchTrack(data) {
-        const station = document.getElementById('player-station');
-        const inject = document.getElementById('iframe-inject');
-        document.getElementById('playing-title').innerText = data.fullTitle;
-        
-        station.classList.add('active');
-        inject.innerHTML = `<iframe src="https://suno.com/embed/${data.id}?autoplay=1" allow="autoplay"></iframe>`;
+  stats.forEach(s => obs.observe(s));
+})();
+
+// ====================== SCROLL TOP ======================
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 500);
+});
+
+// ====================== TRACKS ======================
+const tracks = [
+  { n:1, title:"One Night Only", cat:"fire", details:"1000s, 128 BPM", dur:"16:40", ver:"", id:"daff476d-0b5d-4f71-97a2-cc2b85fb7f3c" },
+  { n:2, title:"The OS of Funk", cat:"fire", details:"480s, Genre blend", dur:"8:00", ver:"", id:"" },
+  { n:3, title:"Lounge", cat:"fire", details:"490s, 420 vibes", dur:"8:10", ver:"", id:"" },
+  { n:4, title:"Go Hard (We Funk)", cat:"fire", details:"480s, 90s West Coast", dur:"8:00", ver:"", id:"" },
+  { n:5, title:"Blue Money", cat:"fire", details:"480s", dur:"8:00", ver:"", id:"" },
+  { n:6, title:"The Devil's Summer", cat:"fire", details:"480s, 90s West Coast", dur:"8:00", ver:"", id:"" },
+  { n:7, title:"Countdown", cat:"fire", details:"480s, Drum & Bass", dur:"8:00", ver:"", id:"" },
+  { n:8, title:"Gimme Some", cat:"fire", details:"480s, Blending genres", dur:"8:00", ver:"", id:"" },
+  { n:9, title:"Saturday Morning", cat:"fire", details:"480s, High-energy", dur:"8:00", ver:"", id:"" },
+  { n:10, title:"Good For Nothin' B...", cat:"fire", details:"Slowed '50s vibe", dur:"8:00", ver:"", id:"" },
+  { n:11, title:"DJ Smoke Stream", cat:"smoke", details:"Pop, 480s journey", dur:"8:00", ver:"v3.5", id:"" },
+  { n:12, title:"A To Z", cat:"fire", details:"8-min, 480s tempo shift", dur:"8:00", ver:"", id:"" },
+  { n:13, title:"Moonshot Blues AKA: HODL Odyssey", cat:"fire", details:"8-min, 480s expansive", dur:"8:00", ver:"v5", id:"9984da17-19f8-4524-b63d-4b2b9e43c5f7" },
+  { n:14, title:"Let Me Light It Up", cat:"vibe", details:"480s dance track", dur:"8:00", ver:"", id:"" },
+  { n:15, title:"Love You Forever, B...", cat:"vibe", details:"480s", dur:"8:00", ver:"", id:"" },
+  { n:16, title:"This My Thing", cat:"fire", details:"480s", dur:"8:00", ver:"", id:"" },
+  { n:17, title:"Relentless Dirty So...", cat:"vibe", details:"480s", dur:"8:00", ver:"", id:"" },
+  { n:18, title:"Thirsty Thursday", cat:"fire", details:"480s", dur:"8:00", ver:"", id:"" },
+  { n:19, title:"No Chump Change", cat:"vibe", details:"Opens with live energy", dur:"8:00", ver:"", id:"" },
+  { n:20, title:"Smoke Streets", cat:"smoke", details:"420s", dur:"7:00", ver:"v4.5+", id:"" },
+  { n:21, title:"Neon Temptation", cat:"vibe", details:"420s", dur:"7:00", ver:"v4.5+", id:"" },
+  { n:22, title:"The Cartograph", cat:"vibe", details:"420s", dur:"7:00", ver:"v4.5+", id:"" },
+  { n:23, title:"Locked Groove", cat:"vibe", details:"420s", dur:"7:00", ver:"v4.5+", id:"" },
+  { n:24, title:"Whisper + Beat", cat:"vibe", details:"420s", dur:"7:00", ver:"v4.5+", id:"" },
+  { n:25, title:"A Musical Journey", cat:"dj", details:"DJ, turntablism, beats", dur:"7:00", ver:"v4.5+", id:"" },
+  { n:26, title:"Juice & Groove", cat:"dj", details:"DJ, Turntablism, Beat", dur:"7:00", ver:"v4.5", id:"" },
+  { n:27, title:"Grown-Up Game", cat:"dj", details:"DJ, Turntablism, Beat", dur:"7:00", ver:"v4.5", id:"" },
+  { n:28, title:"Gimme Some Bad Love", cat:"vibe", details:"Soulful lounge, jazzy", dur:"6:00", ver:"v4", id:"" },
+  { n:29, title:"Queen of the Night", cat:"dj", details:"Live DJ, Turntablism", dur:"6:00", ver:"v4", id:"" },
+  { n:30, title:"Back For It", cat:"vibe", details:"Glitch Disco, Urban", dur:"6:00", ver:"v4.5", id:"" },
+  { n:31, title:"DJ Rap Battle", cat:"dj", details:"125 BPM, Energetic", dur:"6:00", ver:"v3.5", id:"" },
+  { n:32, title:"Purge Customs", cat:"vibe", details:"Tribal percussion", dur:"6:00", ver:"v4.5", id:"" },
+  { n:33, title:"Circuit Overload", cat:"dj", details:"360s, Live DJ, Turntablism", dur:"6:00", ver:"v4.5", id:"" },
+  { n:34, title:"Can't Handle It", cat:"vibe", details:"420s", dur:"7:00", ver:"v4.5", id:"" },
+  { n:35, title:"DJ Shootout", cat:"dj", details:"480s", dur:"8:00", ver:"v4.5", id:"" },
+  { n:36, title:"Late Night Cowboy", cat:"vibe", details:"Late-night cinematic", dur:"8:00", ver:"v4.5", id:"" },
+  { n:37, title:"The Rift", cat:"dj", details:"480s, Live DJ", dur:"8:00", ver:"v4.5", id:"" },
+  { n:38, title:"Tabov", cat:"dj", details:"369s, Live DJ, Turntablism", dur:"6:09", ver:"v4.5", id:"" },
+  { n:39, title:"Mmmm Baby", cat:"dj", details:"360s, Live DJ, FX, Dance", dur:"6:00", ver:"v4.5", id:"" },
+  { n:40, title:"Smoke Streams", cat:"smoke", details:"360s, cinematic adult contemporary", dur:"6:00", ver:"v4.5", id:"" },
+  { n:41, title:"8 Min Smoke Stream", cat:"smoke", details:"360s, cinematic adult contemporary", dur:"6:00", ver:"v4.5", id:"" },
+  { n:42, title:"Make Way", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" },
+  { n:43, title:"The Night Stream", cat:"smoke", details:"360s", dur:"6:00", ver:"v4.5", id:"" },
+  { n:44, title:"The Night", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" },
+  { n:45, title:"The 1st Night", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" },
+  { n:46, title:"Bassquake Symphony", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" },
+  { n:47, title:"The AI Song", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" },
+  { n:48, title:"1st Party Mode", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" },
+  { n:49, title:"Smoke-Stre: L...", cat:"smoke", details:"DJ turntablism fusion", dur:"6:00", ver:"v4.5", id:"" },
+];
+
+const catLabels = { fire:"🔥 FIRE", dj:"🎧 DJ", smoke:"🌫️ SMOKE", vibe:"🎵 VIBE" };
+const catBadge = { fire:"badge-fire", dj:"badge-dj", smoke:"badge-smoke", vibe:"badge-vibe" };
+let currentOpen = null, currentFilter = 'all', searchQuery = '', viewMode = 'grid';
+
+function toggleEmbed(idx) {
+  const el = document.getElementById('embed-' + idx);
+  const track = tracks[idx];
+  const card = el.closest('.track');
+
+  if (currentOpen !== null && currentOpen !== idx) {
+    const prev = document.getElementById('embed-' + currentOpen);
+    if (prev) { prev.classList.remove('open'); prev.innerHTML = ''; }
+    const pc = prev?.closest('.track');
+    if (pc) { pc.classList.remove('playing'); pc.querySelector('.play-btn')?.classList.remove('playing'); }
+  }
+
+  if (el.classList.contains('open')) {
+    el.classList.remove('open'); el.innerHTML = '';
+    card.classList.remove('playing'); card.querySelector('.play-btn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('visible');
+    currentOpen = null;
+  } else {
+    if (track.id) {
+      el.innerHTML = `<iframe src="https://suno.com/embed/${track.id}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe>`;
+    } else {
+      el.innerHTML = `<div class="no-embed">🎵 <a href="https://suno.com/@dj_smoke_stream" target="_blank">Listen on Suno — @dj_smoke_stream</a></div>`;
     }
+    el.classList.add('open');
+    card.classList.add('playing'); card.querySelector('.play-btn').classList.add('playing');
+    document.getElementById('nowPlaying').classList.add('visible');
+    document.getElementById('nowPlayingTitle').textContent = track.title;
+    currentOpen = idx;
+    el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+}
 
-    function closePlayer() {
-        document.getElementById('player-station').classList.remove('active');
-        setTimeout(() => { document.getElementById('iframe-inject').innerHTML = ''; }, 600);
-    }
+function closePlayer() {
+  if (currentOpen !== null) {
+    const el = document.getElementById('embed-' + currentOpen);
+    if (el) { el.classList.remove('open'); el.innerHTML = ''; }
+    const c = el?.closest('.track');
+    if (c) { c.classList.remove('playing'); c.querySelector('.play-btn')?.classList.remove('playing'); }
+  }
+  document.getElementById('nowPlaying').classList.remove('visible');
+  currentOpen = null;
+}
 
-    function handleSearch(query) {
-        const found = tracks.find(t => t.t.toLowerCase().includes(query.toLowerCase()));
-        if (found) {
-            const targetAngle = -( (found.index - 1) / tracks.length ) * Math.PI * 2;
-            targetRotation = targetAngle;
-        }
-    }
+function renderTracks() {
+  const grid = document.getElementById('trackGrid');
+  let filtered = currentFilter === 'all' ? [...tracks] : tracks.filter(t => t.cat === currentFilter);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(t => t.title.toLowerCase().includes(q) || t.details.toLowerCase().includes(q));
+  }
 
-    window.onresize = () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    };
+  document.getElementById('trackCount').textContent = `${filtered.length} of ${tracks.length} tracks`;
 
-    init();
+  grid.className = 'grid' + (viewMode === 'list' ? ' list-view' : '');
+
+  grid.innerHTML = filtered.map((t, i) => {
+    const idx = tracks.indexOf(t);
+    return `
+    <div class="track" style="transition-delay:${Math.min(i * 0.04, 1)}s" data-cat="${t.cat}"
+         onmousemove="this.querySelector('.track-glow').style.setProperty('--mx',((event.offsetX/this.offsetWidth)*100)+'%');this.querySelector('.track-glow').style.setProperty('--my',((event.offsetY/this.offsetHeight)*100)+'%')">
+      <div class="track-shimmer"></div>
+      <div class="track-glow"></div>
+      <div class="track-info">
+        <div class="track-header">
+          <span class="track-num">#${String(t.n).padStart(2,'0')}</span>
+          <span class="track-badge ${catBadge[t.cat]}">${catLabels[t.cat]}</span>
+        </div>
+        <div class="track-title">${t.title}</div>
+        <div class="track-details">${t.details}</div>
+        <div class="track-meta">
+          <span>⏱ ${t.dur}</span>
+          ${t.ver ? `<span>🏷 ${t.ver}</span>` : ''}
+          ${t.id ? '<span style="color:var(--accent2)">▶ Playable</span>' : ''}
+        </div>
+        <button class="play-btn" onclick="toggleEmbed(${idx})">
+          <span>${t.id ? '▶ Play' : '🎵 Listen on Suno'}</span>
+        </button>
+      </div>
+      <div class="embed-container" id="embed-${idx}"></div>
+    </div>`;
+  }).join('');
+
+  // Scroll reveal
+  requestAnimationFrame(() => {
+    const cards = grid.querySelectorAll('.track');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.05, rootMargin: '60px' });
+    cards.forEach(c => obs.observe(c));
+  });
+}
+
+// Filters
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderTracks();
+  });
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', e => { searchQuery = e.target.value; renderTracks(); });
+
+// View toggle
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    viewMode = btn.dataset.view;
+    renderTracks();
+  });
+});
+
+renderTracks();
 </script>
+
 </body>
 </html>
