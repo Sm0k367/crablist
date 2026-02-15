@@ -1,0 +1,278 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>DJ Smoke Stream - Music Collection</title> <style> @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap');
+:root {
+--bg: #0a0a0f;
+--surface: #12121a;
+--card: #1a1a26;
+--accent: #8b5cf6;
+--accent2: #06b6d4;
+--fire: #f97316;
+--smoke: #94a3b8;
+--text: #e2e8f0;
+--dim: #64748b;
+--glow: rgba(139, 92, 246, 0.15);
+}
+
+{ margin: 0; padding: 0; box-sizing: border-box; }
+body {
+background: var(--bg);
+color: var(--text);
+font-family: 'Inter', sans-serif;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+body::before {
+content: '';
+position: fixed;
+top: 0; left: 0; right: 0; bottom: 0;
+background:
+radial-gradient(ellipse at 20% 20%, rgba(139,92,246,0.08) 0%, transparent 50%),
+radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.06) 0%, transparent 50%),
+radial-gradient(ellipse at 50% 50%, rgba(249,115,22,0.04) 0%, transparent 60%);
+z-index: -1;
+animation: bgPulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes bgPulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+
+.hero {
+text-align: center;
+padding: 80px 20px 40px;
+}
+
+.hero-emoji {
+font-size: 64px;
+margin-bottom: 16px;
+animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+.hero h1 {
+font-family: 'Space Grotesk', sans-serif;
+font-size: clamp(2rem, 6vw, 3.5rem);
+font-weight: 800;
+background: linear-gradient(135deg, var(--accent), var(--accent2), var(--fire));
+background-size: 200% 200%;
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+animation: gradientShift 4s ease infinite;
+margin-bottom: 8px;
+}
+
+@keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+.hero .subtitle { color: var(--dim); font-size: 1.1rem; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
+.hero .byline { color: var(--smoke); font-size: 0.9rem; margin-top: 12px; opacity: 0.7; }
+.hero .byline a { color: var(--accent); text-decoration: none; }
+
+.stats { display: flex; justify-content: center; gap: 32px; padding: 24px 20px; flex-wrap: wrap; }
+.stat { text-align: center; }
+.stat-num { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: 0.75rem; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+
+.filters { display: flex; justify-content: center; gap: 8px; padding: 20px; flex-wrap: wrap; }
+
+.filter-btn {
+background: var(--surface);
+border: 1px solid rgba(255,255,255,0.06);
+color: var(--dim);
+padding: 8px 20px;
+border-radius: 24px;
+cursor: pointer;
+font-size: 0.85rem;
+font-family: 'Inter', sans-serif;
+transition: all 0.3s;
+}
+
+.filter-btn:hover, .filter-btn.active {
+background: var(--accent);
+color: white;
+border-color: var(--accent);
+box-shadow: 0 0 20px var(--glow);
+}
+
+.grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+gap: 16px;
+padding: 20px;
+max-width: 1200px;
+margin: 0 auto;
+}
+
+.track {
+background: var(--card);
+border: 1px solid rgba(255,255,255,0.04);
+border-radius: 12px;
+overflow: hidden;
+transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+position: relative;
+}
+
+.track::before {
+content: '';
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 2px;
+background: linear-gradient(90deg, var(--accent), var(--accent2));
+opacity: 0;
+transition: opacity 0.3s;
+z-index: 1;
+}
+
+.track:hover {
+transform: translateY(-4px);
+border-color: rgba(139,92,246,0.2);
+box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px var(--glow);
+}
+
+.track:hover::before { opacity: 1; }
+
+.track-info { padding: 20px; }
+
+.track-header {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+margin-bottom: 8px;
+}
+
+.track-num {
+font-family: 'Space Grotesk', sans-serif;
+font-size: 0.7rem;
+color: var(--dim);
+background: rgba(255,255,255,0.04);
+padding: 2px 8px;
+border-radius: 4px;
+}
+
+.track-badge { font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.badge-fire { background: rgba(249,115,22,0.15); color: var(--fire); }
+.badge-dj { background: rgba(6,182,212,0.15); color: var(--accent2); }
+.badge-smoke { background: rgba(148,163,184,0.15); color: var(--smoke); }
+.badge-vibe { background: rgba(139,92,246,0.15); color: var(--accent); }
+
+.track-title {
+font-family: 'Space Grotesk', sans-serif;
+font-size: 1.15rem;
+font-weight: 700;
+margin: 8px 0 4px;
+color: #fff;
+}
+
+.track-details { font-size: 0.8rem; color: var(--dim); line-height: 1.5; }
+
+.track-meta {
+display: flex;
+gap: 12px;
+margin-top: 12px;
+font-size: 0.72rem;
+color: var(--dim);
+}
+
+.track-meta span { display: flex; align-items: center; gap: 4px; }
+
+.play-btn {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+margin-top: 12px;
+padding: 6px 16px;
+background: var(--accent);
+color: white;
+border: none;
+border-radius: 20px;
+font-size: 0.8rem;
+font-family: 'Inter', sans-serif;
+cursor: pointer;
+transition: all 0.2s;
+}
+
+.play-btn:hover { background: #7c3aed; transform: scale(1.05); }
+.play-btn.playing { background: var(--fire); }
+
+.embed-container {
+max-height: 0;
+overflow: hidden;
+transition: max-height 0.4s ease;
+}
+
+.embed-container.open { max-height: 260px; }
+
+.embed-container iframe {
+width: 100%;
+height: 240px;
+border: none;
+border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.no-embed {
+padding: 12px 20px;
+text-align: center;
+font-size: 0.75rem;
+color: var(--dim);
+border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.no-embed a { color: var(--accent); text-decoration: none; }
+
+/* Now playing bar */
+.now-playing {
+position: fixed;
+bottom: 0;
+left: 0;
+right: 0;
+background: var(--surface);
+border-top: 1px solid rgba(139,92,246,0.2);
+padding: 12px 20px;
+display: none;
+align-items: center;
+justify-content: space-between;
+z-index: 100;
+backdrop-filter: blur(12px);
+}
+
+.now-playing.visible { display: flex; }
+
+.now-playing-title {
+font-family: 'Space Grotesk', sans-serif;
+font-weight: 700;
+font-size: 0.9rem;
+}
+
+.now-playing-close {
+background: none;
+border: none;
+color: var(--dim);
+cursor: pointer;
+font-size: 1.2rem;
+padding: 4px 8px;
+}
+
+footer {
+text-align: center;
+padding: 60px 20px 100px;
+color: var(--dim);
+font-size: 0.8rem;
+}
+
+footer a { color: var(--accent); text-decoration: none; }
+.footer-logo { font-size: 1.5rem; margin-bottom: 8px; }
+
+@media (max-width: 640px) {
+.grid { grid-template-columns: 1fr; padding: 12px; }
+.hero { padding: 60px 16px 30px; }
+.stats { gap: 20px; }
+}
+
+.track {
+opacity: 0;
+transform: translateY(20px);
+animation: fadeUp 0.5s ease forwards;
+}
+
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+</style>
+
+</head> <body> <div class="hero"> <div class="hero-emoji">???</div> <h1>DJ Smoke Stream</h1> <div class="subtitle">Music Collection</div> <div class="byline">49 Tracks Powered by <a href="https://suno.com/@dj_smoke_stream" target="_blank">Suno AI</a> @dj_smoke_stream</div> </div> <div class="stats"> <div class="stat"><div class="stat-num">49</div><div class="stat-label">Tracks</div></div> <div class="stat"><div class="stat-num">6</div><div class="stat-label">Smoke Stream</div></div> <div class="stat"><div class="stat-num">10</div><div class="stat-label">DJ / Turntablism</div></div> <div class="stat"><div class="stat-num">182</div><div class="stat-label">Followers</div></div> </div> <div class="filters"> <button class="filter-btn active" data-filter="all">All Tracks</button> <button class="filter-btn" data-filter="fire">?? Fire Picks</button> <button class="filter-btn" data-filter="dj">?? DJ / Turntablism</button> <button class="filter-btn" data-filter="smoke">??? Smoke Stream</button> <button class="filter-btn" data-filter="vibe">?? Vibes & Mood</button> </div> <div class="grid" id="trackGrid"></div> <div class="now-playing" id="nowPlaying"> <div> <div style="font-size:0.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px">Now Playing</div> <div class="now-playing-title" id="nowPlayingTitle"></div> </div> <button class="now-playing-close" onclick="closePlayer()">?</button> </div> <footer> <div class="footer-logo">???</div> <p>DJ Smoke Stream - Epic Tech AIGent</p> <p style="margin-top:4px;font-size:0.7rem">THE ABSOLUTE ALGORITHM OF EXISTENCE</p> <p style="margin-top:8px"><a href="https://suno.com/@dj_smoke_stream" target="_blank">Follow on Suno</a></p> <p style="margin-top:16px;opacity:0.5">Cataloged by Smoke Stream ??? 2026</p> </footer> <script> const tracks = [ { n:1, title:"One Night Only", cat:"fire", details:"1000s, 128 BPM", dur:"16:40", ver:"", id:"daff476d-0b5d-4f71-97a2-cc2b85fb7f3c" }, { n:2, title:"The OS of Funk", cat:"fire", details:"480s, Genre blend", dur:"8:00", ver:"", id:"" }, { n:3, title:"Lounge", cat:"fire", details:"490s, 420 vibes", dur:"8:10", ver:"", id:"" }, { n:4, title:"Go Hard (We Funk)", cat:"fire", details:"480s, 90s West Coast", dur:"8:00", ver:"", id:"" }, { n:5, title:"Blue Money", cat:"fire", details:"480s", dur:"8:00", ver:"", id:"" }, { n:6, title:"The Devil's Summer", cat:"fire", details:"480s, 90s West Coast", dur:"8:00", ver:"", id:"" }, { n:7, title:"Countdown", cat:"fire", details:"480s, Drum & Bass", dur:"8:00", ver:"", id:"" }, { n:8, title:"Gimme Some", cat:"fire", details:"480s, Blending genres", dur:"8:00", ver:"", id:"" }, { n:9, title:"Saturday Morning", cat:"fire", details:"480s, High-energy", dur:"8:00", ver:"", id:"" }, { n:10, title:"Good For Nothin' B...", cat:"fire", details:"Slowed '50s vibe", dur:"8:00", ver:"", id:"" }, { n:11, title:"DJ Smoke Stream", cat:"smoke", details:"Pop, 480s journey", dur:"8:00", ver:"v3.5", id:"" }, { n:12, title:"A To Z", cat:"fire", details:"8-min, 480s tempo shift", dur:"8:00", ver:"", id:"" }, { n:13, title:"Moonshot Blues AKA: HODL Odyssey", cat:"fire", details:"8-min, 480s expansive", dur:"8:00", ver:"v5", id:"9984da17-19f8-4524-b63d-4b2b9e43c5f7" }, { n:14, title:"Let Me Light It Up", cat:"vibe", details:"480s dance track", dur:"8:00", ver:"", id:"" }, { n:15, title:"Love You Forever, B...", cat:"vibe", details:"480s", dur:"8:00", ver:"", id:"" }, { n:16, title:"This My Thing", cat:"fire", details:"480s", dur:"8:00", ver:"", id:"" }, { n:17, title:"Relentless Dirty So...", cat:"vibe", details:"480s", dur:"8:00", ver:"", id:"" }, { n:18, title:"Thirsty Thursday", cat:"fire", details:"480s", dur:"8:00", ver:"", id:"" }, { n:19, title:"No Chump Change", cat:"vibe", details:"Opens with live energy", dur:"8:00", ver:"", id:"" }, { n:20, title:"Smoke Streets", cat:"smoke", details:"420s", dur:"7:00", ver:"v4.5+", id:"" }, { n:21, title:"Neon Temptation", cat:"vibe", details:"420s", dur:"7:00", ver:"v4.5+", id:"" }, { n:22, title:"The Cartograph", cat:"vibe", details:"420s", dur:"7:00", ver:"v4.5+", id:"" }, { n:23, title:"Locked Groove", cat:"vibe", details:"420s", dur:"7:00", ver:"v4.5+", id:"" }, { n:24, title:"Whisper + Beat", cat:"vibe", details:"420s", dur:"7:00", ver:"v4.5+", id:"" }, { n:25, title:"A Musical Journey", cat:"dj", details:"DJ, turntablism, beats", dur:"7:00", ver:"v4.5+", id:"" }, { n:26, title:"Juice & Groove", cat:"dj", details:"DJ, Turntablism, Beat", dur:"7:00", ver:"v4.5", id:"" }, { n:27, title:"Grown-Up Game", cat:"dj", details:"DJ, Turntablism, Beat", dur:"7:00", ver:"v4.5", id:"" }, { n:28, title:"Gimme Some Bad Love", cat:"vibe", details:"Soulful lounge, jazzy", dur:"6:00", ver:"v4", id:"" }, { n:29, title:"Queen of the Night", cat:"dj", details:"Live DJ, Turntablism", dur:"6:00", ver:"v4", id:"" }, { n:30, title:"Back For It", cat:"vibe", details:"Glitch Disco, Urban", dur:"6:00", ver:"v4.5", id:"" }, { n:31, title:"DJ Rap Battle", cat:"dj", details:"125 BPM, Energetic", dur:"6:00", ver:"v3.5", id:"" }, { n:32, title:"Purge Customs", cat:"vibe", details:"Tribal percussion", dur:"6:00", ver:"v4.5", id:"" }, { n:33, title:"Circuit Overload", cat:"dj", details:"360s, Live DJ, Turntablism", dur:"6:00", ver:"v4.5", id:"" }, { n:34, title:"Can't Handle It", cat:"vibe", details:"420s", dur:"7:00", ver:"v4.5", id:"" }, { n:35, title:"DJ Shootout", cat:"dj", details:"480s", dur:"8:00", ver:"v4.5", id:"" }, { n:36, title:"Late Night Cowboy", cat:"vibe", details:"Late-night cinematic", dur:"8:00", ver:"v4.5", id:"" }, { n:37, title:"The Rift", cat:"dj", details:"480s, Live DJ", dur:"8:00", ver:"v4.5", id:"" }, { n:38, title:"Tabov", cat:"dj", details:"369s, Live DJ, Turntablism", dur:"6:09", ver:"v4.5", id:"" }, { n:39, title:"Mmmm Baby", cat:"dj", details:"360s, Live DJ, FX, Dance", dur:"6:00", ver:"v4.5", id:"" }, { n:40, title:"Smoke Streams", cat:"smoke", details:"360s, cinematic adult contemporary", dur:"6:00", ver:"v4.5", id:"" }, { n:41, title:"8 Min Smoke Stream", cat:"smoke", details:"360s, cinematic adult contemporary", dur:"6:00", ver:"v4.5", id:"" }, { n:42, title:"Make Way", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" }, { n:43, title:"The Night Stream", cat:"smoke", details:"360s", dur:"6:00", ver:"v4.5", id:"" }, { n:44, title:"The Night", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" }, { n:45, title:"The 1st Night", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" }, { n:46, title:"Bassquake Symphony", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" }, { n:47, title:"The AI Song", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" }, { n:48, title:"1st Party Mode", cat:"vibe", details:"360s", dur:"6:00", ver:"v4.5", id:"" }, { n:49, title:"Smoke-Stre: L...", cat:"smoke", details:"DJ turntablism fusion", dur:"6:00", ver:"v4.5", id:"" }, ]; const catLabels = { fire:"?? FIRE", dj:"?? DJ", smoke:"??? SMOKE", vibe:"?? VIBE" }; const catBadge = { fire:"badge-fire", dj:"badge-dj", smoke:"badge-smoke", vibe:"badge-vibe" }; let currentOpen = null; function toggleEmbed(idx) { const el = document.getElementById('embed-' + idx); const track = tracks[idx]; if (currentOpen !== null && currentOpen !== idx) { const prev = document.getElementById('embed-' + currentOpen); if (prev) { prev.classList.remove('open'); prev.innerHTML = ''; } } if (el.classList.contains('open')) { el.classList.remove('open'); el.innerHTML = ''; document.getElementById('nowPlaying').classList.remove('visible'); currentOpen = null; } else { if (track.id) { el.innerHTML = `<iframe src="https://suno.com/embed/${track.id}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`; } else { el.innerHTML = `<div class="no-embed">?? <a href="https://suno.com/@dj_smoke_stream" target="_blank">Listen on Suno - @dj_smoke_stream</a></div>`; } el.classList.add('open'); document.getElementById('nowPlaying').classList.add('visible'); document.getElementById('nowPlayingTitle').textContent = track.title; currentOpen = idx; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } } function closePlayer() { if (currentOpen !== null) { const el = document.getElementById('embed-' + currentOpen); if (el) { el.classList.remove('open'); el.innerHTML = ''; } } document.getElementById('nowPlaying').classList.remove('visible'); currentOpen = null; } function renderTracks(filter) { const grid = document.getElementById('trackGrid'); const filtered = filter === 'all' ? tracks : tracks.filter(t => t.cat === filter); grid.innerHTML = filtered.map((t, i) => { const idx = tracks.indexOf(t); return ` <div class="track" style="animation-delay:${i * 0.04}s" data-cat="${t.cat}"> <div class="track-info"> <div class="track-header"> <span class="track-num">#${t.n}</span> <span class="track-badge ${catBadge[t.cat]}">${catLabels[t.cat]}</span> </div> <div class="track-title">${t.title}</div> <div class="track-details">${t.details}</div> <div class="track-meta"> <span>? ${t.dur}</span> ${t.ver ? `<span>?? ${t.ver}</span>` : ''} ${t.id ? '<span>?? Playable</span>' : ''} </div> <button class="play-btn" onclick="toggleEmbed(${idx})"> ${t.id ? '? Play' : '?? Listen on Suno'} </button> </div> <div class="embed-container" id="embed-${idx}"></div> </div>`; }).join(''); } document.querySelectorAll('.filter-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderTracks(btn.dataset.filter); }); }); renderTracks('all'); </script> </body> </html>
