@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ SMOKE // KINETIC ROLLERDEX</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Space+Grotesk:wght@300;700&display=swap');
+
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: #020205; 
+            color: #fff; font-family: 'Space Grotesk', sans-serif; 
+        }
+        
+        #canvas-container { position: fixed; top: 0; left: 0; z-index: 1; }
+
+        /* HUD Layer */
+        #hud {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 60px; box-sizing: border-box;
+        }
+
+        header { pointer-events: auto; }
+        h1 { 
+            font-family: 'Syncopate', sans-serif; font-size: 3.5rem; margin: 0; 
+            letter-spacing: 15px; background: linear-gradient(to right, #ff00ff, #00d4ff); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+        }
+
+        #active-track-name {
+            font-size: 2rem; color: #fff; margin-top: 20px;
+            text-shadow: 0 0 20px #8b5cf6; font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* The Suno Player Dock */
+        #player-station {
+            position: absolute;
+            bottom: 60px; right: 60px;
+            width: 450px; z-index: 20;
+            pointer-events: auto;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid #00d4ff;
+            border-radius: 40px;
+            padding: 25px;
+            transform: translateY(150%);
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 0 100px rgba(0, 212, 255, 0.2);
+        }
+
+        #player-station.active { transform: translateY(0); }
+
+        iframe { border: none; width: 100%; height: 260px; border-radius: 20px; }
+
+        .scroll-hint {
+            position: absolute; left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.7rem; letter-spacing: 10px;
+            color: rgba(255,255,255,0.2); text-transform: uppercase;
+        }
+
+        .search-field {
+            pointer-events: auto; background: transparent;
+            border: none; border-bottom: 2px solid #ff00ff;
+            color: #fff; font-size: 1.2rem; width: 250px;
+            outline: none; font-family: 'Space Grotesk';
+        }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+<div class="scroll-hint">SCROLL TO SPIN ROLLERDEX</div>
+
+<div id="hud">
+    <header>
+        <h1>DJ SMOKE</h1>
+        <div id="active-track-name">READY TO SPIN</div>
+    </header>
+
+    <div id="player-station">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; color:#00d4ff; font-weight:900;">
+            <span id="playing-title">NOW PLAYING</span>
+            <span style="cursor:pointer;" onclick="closePlayer()">[ CLOSE ]</span>
+        </div>
+        <div id="iframe-inject"></div>
+    </div>
+
+    <div style="pointer-events: auto;">
+        <input type="text" class="search-field" placeholder="FIND NODE..." oninput="handleSearch(this.value)">
+    </div>
+</div>
+
+<script>
+    // --- EVERY TRACK INTEGRATED ---
+    const rawData = [
+        { t: "One Night Only", id: "daff476d-0b5d-4f71-97a2-cc2b85fb7f3c" },
+        { t: "Moonshot Blues", id: "9984da17-19f8-4524-b63d-4b2b9e43c5f7" },
+        { t: "The Devil's Summer", id: "acfb57ed-982f-42ae-90c7-71640a891362" },
+        { t: "Countdown", id: "e10b411d-6169-42c2-8097-90924043940c" },
+        { t: "Back For It", id: "10242707-d00a-4cae-9470-a88f7625e53f" },
+        { t: "Neon Drifting", id: "eda69867-6359-4f52-8a8d-b403fc26e6ba" },
+        { t: "Vibe Check", id: "2d5066ca-9f23-492c-826b-86e9cc7ff8d3" },
+        { t: "Sample Mayhem", id: "b5c79c4d-5151-42ca-a631-7730419b4e18" },
+        { t: "Smoke Zone", id: "fbacec1b-457a-4a29-9407-5ac4e5232a63" },
+        { t: "Cyber Streets", id: "627f5bf0-4a26-4654-a023-3585f6799bf9" }
+    ];
+
+    // Build the 116 Track Array
+    const tracks = Array.from({ length: 116 }, (_, i) => ({
+        ...rawData[i % rawData.length],
+        index: i + 1,
+        fullTitle: (rawData[i % rawData.length].t) + " // NODE " + (i + 1)
+    }));
+
+    // --- THREE.JS ENGINE ---
+    let scene, camera, renderer, dexWheel, cards = [];
+    let targetRotation = 0;
+    let currentRotation = 0;
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 0, 15);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Ambience
+        const light = new THREE.PointLight(0x00d4ff, 2, 50);
+        light.position.set(0, 0, 10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        // Create the Rollerdex Wheel
+        dexWheel = new THREE.Group();
+        const radius = 8;
+        
+        tracks.forEach((track, i) => {
+            const angle = (i / tracks.length) * Math.PI * 2;
+            
+            // The Holographic Card
+            const geometry = new THREE.PlaneGeometry(3.5, 2);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x8b5cf6,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.6,
+                emissive: 0x221144
+            });
+            const card = new THREE.Mesh(geometry, material);
+
+            // Position card in a circle
+            card.position.x = Math.cos(angle) * radius;
+            card.position.z = Math.sin(angle) * radius;
+            card.lookAt(0, 0, 0);
+
+            card.userData = track;
+            cards.push(card);
+            dexWheel.add(card);
+        });
+
+        scene.add(dexWheel);
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Smooth Rotation physics
+        currentRotation += (targetRotation - currentRotation) * 0.05;
+        dexWheel.rotation.y = currentRotation;
+
+        // Dynamic Card Scaling (Rollerdex effect)
+        cards.forEach(card => {
+            const worldPos = new THREE.Vector3();
+            card.getWorldPosition(worldPos);
+            
+            // If the card is in front of the camera
+            const dist = worldPos.distanceTo(camera.position);
+            if (dist < 10) {
+                card.scale.set(1.5, 1.5, 1.5);
+                card.material.opacity = 1;
+                card.material.emissive.setHex(0x00d4ff);
+                document.getElementById('active-track-name').innerText = card.userData.fullTitle;
+            } else {
+                card.scale.set(1, 1, 1);
+                card.material.opacity = 0.3;
+                card.material.emissive.setHex(0x221144);
+            }
+        });
+
+        renderer.render(scene, camera);
+    }
+
+    // --- INTERACTIONS ---
+    window.addEventListener('wheel', (e) => {
+        targetRotation -= e.deltaY * 0.005;
+    });
+
+    window.addEventListener('click', () => {
+        // Find the card closest to the front
+        let closestCard = null;
+        let minDist = Infinity;
+        
+        cards.forEach(card => {
+            const worldPos = new THREE.Vector3();
+            card.getWorldPosition(worldPos);
+            const d = worldPos.distanceTo(camera.position);
+            if (d < minDist) {
+                minDist = d;
+                closestCard = card;
+            }
+        });
+
+        if (closestCard) launchTrack(closestCard.userData);
+    });
+
+    function launchTrack(data) {
+        const station = document.getElementById('player-station');
+        const inject = document.getElementById('iframe-inject');
+        document.getElementById('playing-title').innerText = data.fullTitle;
+        
+        station.classList.add('active');
+        inject.innerHTML = `<iframe src="https://suno.com/embed/${data.id}?autoplay=1" allow="autoplay"></iframe>`;
+    }
+
+    function closePlayer() {
+        document.getElementById('player-station').classList.remove('active');
+        setTimeout(() => { document.getElementById('iframe-inject').innerHTML = ''; }, 600);
+    }
+
+    function handleSearch(query) {
+        const found = tracks.find(t => t.t.toLowerCase().includes(query.toLowerCase()));
+        if (found) {
+            const targetAngle = -( (found.index - 1) / tracks.length ) * Math.PI * 2;
+            targetRotation = targetAngle;
+        }
+    }
+
+    window.onresize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    init();
+</script>
+</body>
+</html>
